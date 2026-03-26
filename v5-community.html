@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Community Levels</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Silkscreen:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    min-height: 100vh;
+    background: #e8eedf;
+    font-family: 'Nunito', sans-serif;
+    display: flex;
+    flex-direction: column;
+  }
+  .pixel { font-family: 'Silkscreen', monospace; }
+
+  /* Header */
+  .header {
+    background: #3a5a30;
+    border-bottom: 1px solid #2e4a26;
+    padding: 14px 28px;
+    flex-shrink: 0;
+  }
+  .header-inner { display: flex; justify-content: space-between; align-items: flex-end; }
+  .header h1 { font-family: 'Silkscreen', monospace; font-size: 20px; color: #f0f4ec; }
+  .header .subtitle { font-size: 12px; color: #a0b890; margin-top: 3px; }
+  .tip-box {
+    max-width: 380px; padding: 8px 14px;
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12);
+    font-size: 11px; color: #c0d0b0; line-height: 1.5;
+  }
+  .tip-label { font-family: 'Silkscreen', monospace; font-size: 9px; color: #8aaa78; }
+
+  /* Search + sort */
+  .toolbar {
+    display: flex; align-items: center; gap: 16px;
+    padding: 8px 28px;
+    background: #eff3e8;
+    border-bottom: 1px solid #d4dcc8;
+    flex-shrink: 0;
+  }
+  .search-input {
+    width: 260px; padding: 5px 10px;
+    background: #f8faf4; border: 1px solid #c8d4ba;
+    font-family: 'Nunito', sans-serif; font-size: 12px;
+    color: #4a5a40; outline: none;
+  }
+  .sort-group { display: flex; align-items: center; gap: 4px; font-family: 'Silkscreen', monospace; font-size: 9px; color: #8a9a78; }
+  .sort-btn {
+    padding: 2px 8px; cursor: pointer; border: 1px solid transparent;
+    background: transparent; color: #8a9a78;
+    font-family: 'Silkscreen', monospace; font-size: 9px;
+    transition: all 0.1s;
+  }
+  .sort-btn.active { color: #3a5a30; background: #dce6d0; border-color: #c0d0b0; }
+  .result-count { font-family: 'Silkscreen', monospace; font-size: 9px; color: #aab89a; margin-left: auto; }
+
+  /* Column headers */
+  .col-headers {
+    display: flex; align-items: center;
+    padding: 6px 28px 6px 0;
+    background: #e4eadc;
+    border-bottom: 1px solid #ccd8be;
+    flex-shrink: 0;
+  }
+  .col-headers span {
+    font-family: 'Silkscreen', monospace; font-size: 8px;
+    color: #7a8a6a; text-transform: uppercase;
+  }
+  .col-diff { width: 38px; flex-shrink: 0; }
+  .col-level { flex: 1 1 160px; padding-left: 14px; }
+  .col-creator { flex: 0 0 110px; }
+  .col-desc { flex: 3 1 300px; }
+  .col-tags { flex: 0 0 90px; }
+  .col-clears { flex: 0 0 48px; text-align: right; }
+
+  /* Level list */
+  .level-list { flex: 1; background: #fafafa; }
+  .level-row {
+    display: flex; align-items: stretch;
+    border-bottom: 1px solid #eeeeea;
+    cursor: default;
+    transition: background 0.08s;
+  }
+  .level-row:hover { background: #f5f5f2 !important; }
+  .level-row:nth-child(odd) { background: #fafafa; }
+  .level-row:nth-child(even) { background: #f5f5f3; }
+
+  .diff-bar {
+    width: 38px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .diff-num { font-family: 'Silkscreen', monospace; font-size: 14px; color: #fff; font-weight: 700; }
+
+  .row-content {
+    flex: 1; display: flex; align-items: center;
+    padding: 9px 28px 9px 14px; gap: 14px; min-width: 0;
+  }
+
+  .cell-level { flex: 1 1 160px; min-width: 0; }
+  .level-name {
+    font-family: 'Silkscreen', monospace; font-size: 11px; color: #333;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .unverified-badge {
+    font-size: 7px; font-family: 'Silkscreen', monospace;
+    padding: 1px 4px; background: #f0e0d8; color: #b06040;
+    border: 1px solid #e0ccc0; flex-shrink: 0; display: inline-block; margin-left: 6px;
+  }
+
+  .cell-creator {
+    flex: 0 0 110px; font-size: 12px; color: #6a7a5a;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+
+  .cell-desc {
+    flex: 3 1 300px; font-size: 12px; color: #4a4a44;
+    line-height: 1.45; overflow: hidden; text-overflow: ellipsis;
+    white-space: nowrap; min-width: 0;
+  }
+
+  .cell-tags { flex: 0 0 90px; display: flex; gap: 3px; flex-wrap: wrap; }
+  .tag {
+    padding: 1px 6px; font-size: 8px; font-family: 'Silkscreen', monospace;
+    background: #e6ecdc; color: #6a7a5a; border: 1px solid #d0dcc0;
+    white-space: nowrap;
+  }
+
+  .cell-clears { flex: 0 0 48px; text-align: right; }
+  .clears-num { font-family: 'Silkscreen', monospace; font-size: 14px; font-weight: 700; }
+
+  .no-results { padding: 24px 28px; color: #8a9a7a; font-size: 13px; }
+
+  /* Footer */
+  .footer {
+    background: #e4eadc;
+    border-top: 1px solid #ccd8be;
+    padding: 10px 28px;
+    flex-shrink: 0;
+  }
+  .footer-inner { display: flex; align-items: center; justify-content: space-between; }
+  .diff-key { display: flex; align-items: center; gap: 2px; }
+  .diff-key-label { font-family: 'Silkscreen', monospace; font-size: 8px; color: #8a9a78; margin-right: 6px; }
+  .diff-key-block {
+    width: 20px; height: 14px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .diff-key-block span { font-family: 'Silkscreen', monospace; font-size: 7px; color: #fff; font-weight: 700; }
+  .footer-credit { font-family: 'Silkscreen', monospace; font-size: 8px; color: #a0b090; }
+
+  .bottom-strip { height: 6px; background: #4a9a4a; flex-shrink: 0; }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div class="header-inner">
+    <div>
+      <h1>Community Levels</h1>
+      <div class="subtitle" id="subtitle"></div>
+    </div>
+    <div class="tip-box">
+      <span class="tip-label">TIP: </span>
+      For levels requiring frequent restarts, press Tab a few times to reach "play", then Enter to restart.
+    </div>
+  </div>
+</div>
+
+<!-- Toolbar -->
+<div class="toolbar">
+  <input type="text" class="search-input" id="search" placeholder="search levels, creators, descriptions...">
+  <div class="sort-group">
+    <span>sort by:</span>
+    <span class="sort-btn active" data-sort="default">default</span>
+    <span class="sort-btn" data-sort="name">name</span>
+    <span class="sort-btn" data-sort="diff">difficulty</span>
+    <span class="sort-btn" data-sort="clears">clears</span>
+  </div>
+  <span class="result-count" id="result-count"></span>
+</div>
+
+<!-- Column headers -->
+<div class="col-headers">
+  <div class="col-diff"></div>
+  <div class="col-level"><span>Level</span></div>
+  <div class="col-creator"><span>Creator</span></div>
+  <div class="col-desc"><span>Description</span></div>
+  <div class="col-tags"><span>Tags</span></div>
+  <div class="col-clears"><span>Clears</span></div>
+</div>
+
+<!-- Level list -->
+<div class="level-list" id="level-list"></div>
+
+<!-- Footer -->
+<div class="footer">
+  <div class="footer-inner">
+    <div class="diff-key" id="diff-key">
+      <span class="diff-key-label">DIFFICULTY</span>
+    </div>
+    <span class="footer-credit">JERRY LAWSON DOODLE / COMMUNITY PROJECT</span>
+  </div>
+</div>
+
+<!-- Bottom strip -->
+<div class="bottom-strip"></div>
+
+<script>
+const LEVELS = [
+  { name: "Icarus", diff: 5, creator: "Ethan Ma", desc: "Descently Long, hint: be dumb", clears: 10, tags: ["Blocks","Switches"], verified: true },
+  { name: "Rings of Fire v2", diff: 6, creator: "Ethan Ma", desc: "Quite Long, Inside is a lot harder than outside", clears: 9, tags: ["Spinners"], verified: true },
+  { name: "Switches", diff: 6, creator: "Mason Luczycki", desc: "Up and Down to switch blocks on and off, medium length", clears: 6, tags: ["Switches","Blocks"], verified: true },
+  { name: "Tower Sprint", diff: 3, creator: "Ethan Ma", desc: "Short Level, requires speed and precision.", clears: 10, tags: ["Restart","Blocks"], verified: true },
+  { name: "Showcase", diff: 2, creator: "Ethan Ma", desc: "Medium Length, there are several skips that you can use", clears: 13, tags: ["Blocks","Spinners"], verified: true },
+  { name: "Fun!", diff: 1, creator: "Mason Luczycki", desc: "Weekly Level 1. Short level, for beginners, really easy!", clears: 16, tags: ["Restart","Enemies"], verified: true },
+  { name: "Bullet Hell", diff: 4, creator: "Alexander Mazal", desc: "Short to medium length; some tricky jumps, so it might take a while", clears: 10, tags: ["Restart","Enemies"], verified: true },
+  { name: "Sands of Time v3", diff: 6, creator: "Ethan Ma", desc: "A medium length race against time. Requires Smovement.", clears: 6, tags: ["Falling Block","Timed"], verified: true },
+  { name: "Evil...", diff: 8, creator: "Mason Luczycki", desc: "Because I'm evil... you must now complete this course. Short length, repetative complex jumps.", clears: 0, tags: ["Restart"], verified: false },
+  { name: "The End is in Sight v3", diff: 9, creator: "Ethan Ma", desc: "Short and simple, just pure pain.", clears: 1, tags: ["Spinners"], verified: true },
+  { name: "Eazy Maze", diff: 1, creator: "Ethan Ma", desc: "A chill maze puzzle.", clears: 10, tags: ["Switches","Top-Down"], verified: true },
+  { name: "Snache", diff: 8, creator: "Mason Luczycki", desc: "Longest game yet, shaped like a snake. Don't try to cheat!", clears: 4, tags: ["Spinners","Switches"], verified: true },
+  { name: "Airplane", diff: 3, creator: "Mason Luczycki", desc: "Quite short, death is necessary", clears: 8, tags: ["Blocks"], verified: true },
+  { name: "Fire and Ice", diff: 9, creator: "Ethan Ma", desc: "Medium Length level, not very fun by design unless your really good, try at your own risk.", clears: 0, tags: ["Enemies","Spinners"], verified: false },
+  { name: "Keys", diff: 6, creator: "Knox McGraw", desc: "A short length level, but make no mistakes or you will have to restart.", clears: 4, tags: ["Restart","Blocks"], verified: true },
+  { name: "Saphire Temple", diff: 1, creator: "Ethan Ma", desc: "Not really a level at all... Click edit and zoom out to see the full thing.", clears: 8, tags: ["Artwork"], verified: true },
+  { name: "Double Trouble", diff: 3, creator: "Knox McGraw", desc: "Double the fun! Try not to get out of sync.", clears: 7, tags: ["Gimmick","Switches"], verified: true },
+  { name: "Fortress", diff: 5, creator: "Ethan Ma", desc: "When you get the second key, Up and Down to switch blocks on and off. This level is quite long, and is as much a test of problem-solving as skill.", clears: 3, tags: ["Switches","Parkour"], verified: true },
+  { name: "Chrysler", diff: 6, creator: "Mason Luczycki", desc: "Jumping Practice.", clears: 5, tags: ["Blocks"], verified: true },
+  { name: "Not so Evil...", diff: 2, creator: "Mason Luczycki", desc: "Not as evil as before, quite easy, short length.", clears: 6, tags: ["Blocks"], verified: true },
+  { name: "Patience", diff: 1, creator: "Alexander Mazal", desc: "Be Patient", clears: 10, tags: ["Gimmick"], verified: true },
+  { name: "Why??", diff: 1, creator: "Mason Luczycki", desc: "We can do this the easy way, or the hard way. Hint: be dumb.", clears: 12, tags: ["Gimmick"], verified: true },
+];
+
+const DIFF_COLORS = ["", "#48a868", "#58a458", "#6ca048", "#889838", "#9c8c28", "#a87828", "#b86228", "#c84828", "#b83838", "#a02828"];
+
+function diffColor(d) { return DIFF_COLORS[d] || "#888"; }
+
+let currentSort = "default";
+let currentSearch = "";
+
+function getFiltered() {
+  let r = [...LEVELS];
+  if (currentSearch) {
+    const q = currentSearch.toLowerCase();
+    r = r.filter(l => l.name.toLowerCase().includes(q) || l.creator.toLowerCase().includes(q) || l.desc.toLowerCase().includes(q));
+  }
+  if (currentSort === "name") r.sort((a, b) => a.name.localeCompare(b.name));
+  else if (currentSort === "diff") r.sort((a, b) => a.diff - b.diff);
+  else if (currentSort === "clears") r.sort((a, b) => b.clears - a.clears);
+  return r;
+}
+
+function escapeHtml(str) {
+  const div = document.createElement("div");
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function renderList() {
+  const filtered = getFiltered();
+  const list = document.getElementById("level-list");
+
+  document.getElementById("subtitle").textContent = filtered.length + " levels shown / 168 total / 32 players";
+  document.getElementById("result-count").textContent = filtered.length + " result" + (filtered.length !== 1 ? "s" : "");
+
+  if (filtered.length === 0) {
+    list.innerHTML = '<div class="no-results">No levels match "' + escapeHtml(currentSearch) + '"</div>';
+    return;
+  }
+
+  let html = "";
+  filtered.forEach((level, i) => {
+    const bg = i % 2 === 0 ? "#fafafa" : "#f5f5f3";
+    const clearsColor = level.clears > 0 ? "#4a5a40" : "#c0c8b8";
+    const tagsHtml = level.tags.map(t => '<span class="tag">' + escapeHtml(t) + '</span>').join("");
+    const unvHtml = !level.verified ? '<span class="unverified-badge">UNVERIFIED</span>' : "";
+
+    html += '<div class="level-row" style="background:' + bg + '">'
+      + '<div class="diff-bar" style="background:' + diffColor(level.diff) + '">'
+      +   '<span class="diff-num">' + level.diff + '</span>'
+      + '</div>'
+      + '<div class="row-content">'
+      +   '<div class="cell-level">'
+      +     '<span class="level-name">' + escapeHtml(level.name) + '</span>'
+      +     unvHtml
+      +   '</div>'
+      +   '<div class="cell-creator">' + escapeHtml(level.creator) + '</div>'
+      +   '<div class="cell-desc">' + escapeHtml(level.desc) + '</div>'
+      +   '<div class="cell-tags">' + tagsHtml + '</div>'
+      +   '<div class="cell-clears">'
+      +     '<span class="clears-num" style="color:' + clearsColor + '">' + level.clears + '</span>'
+      +   '</div>'
+      + '</div>'
+      + '</div>';
+  });
+
+  list.innerHTML = html;
+}
+
+// Difficulty key in footer
+function renderDiffKey() {
+  const container = document.getElementById("diff-key");
+  for (let d = 1; d <= 10; d++) {
+    const block = document.createElement("div");
+    block.className = "diff-key-block";
+    block.style.background = diffColor(d);
+    block.innerHTML = '<span>' + d + '</span>';
+    container.appendChild(block);
+  }
+}
+
+// Search
+document.getElementById("search").addEventListener("input", function(e) {
+  currentSearch = e.target.value;
+  renderList();
+});
+
+// Sort buttons
+document.querySelectorAll(".sort-btn").forEach(btn => {
+  btn.addEventListener("click", function() {
+    document.querySelectorAll(".sort-btn").forEach(b => b.classList.remove("active"));
+    this.classList.add("active");
+    currentSort = this.dataset.sort;
+    renderList();
+  });
+});
+
+// Init
+renderDiffKey();
+renderList();
+</script>
+</body>
+</html>
